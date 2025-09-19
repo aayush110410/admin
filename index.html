@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Tourist Safety – Authorities Portal</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.2/mapbox-gl-geocoder.css" rel="stylesheet" type="text/css" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.6.2/mapbox-gl-draw.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Fullscreen Map -->
+  <div id="map" class="map-full" role="application" aria-label="Smart Tourist Safety map"></div>
+
+  <!-- Search -->
+  <div class="search-container">
+    <div class="search-box">
+      <div class="search-input-wrapper">
+        <div id="geocoder"></div>
+        <button class="search-clear-btn" id="search-clear-btn" title="Clear search" aria-label="Clear search">×</button>
+      </div>
+      <div class="inline-actions">
+        <button class="btn" id="btn-route">Get Route</button>
+        <button class="btn" id="btn-clear">Clear</button>
+        <button class="btn" id="btn-start-nav">Start</button>
+        <button class="btn" id="btn-stop-nav" disabled>Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transport Modes -->
+  <div class="transport-modes" id="transport-modes">
+    <button class="transport-mode active" data-mode="driving" title="Driving">
+      <i class="fas fa-car"></i>
+      <span>Car</span>
+    </button>
+    <button class="transport-mode" data-mode="walking" title="Walking">
+      <i class="fas fa-walking"></i>
+      <span>Walk</span>
+    </button>
+    <button class="transport-mode" data-mode="cycling" title="Cycling">
+      <i class="fas fa-bicycle"></i>
+      <span>Cycle</span>
+    </button>
+    <button class="transport-mode" data-mode="transit" title="Transit">
+      <i class="fas fa-bus"></i>
+      <span>Transit</span>
+    </button>
+  </div>
+
+  <!-- Route Alternatives -->
+  <div class="route-alternatives" id="route-alternatives"></div>
+
+  <!-- Banner -->
+  <div class="navigation-banner" id="navigation-banner">
+    <div class="nav-instruction"><div class="nav-icon" id="nav-icon">⬆</div><span id="nav-text">Instruction</span></div>
+    <div class="nav-details"><span class="nav-distance" id="nav-distance">—</span><div class="nav-eta">⏱ <span id="nav-eta">—</span></div></div>
+  </div>
+
+  <!-- Floating map controls -->
+  <div class="map-controls">
+    <button class="control-btn location-btn" id="location-btn" title="My location">
+      <i class="fas fa-location-crosshairs"></i>
+    </button>
+    <button class="control-btn" id="globe-btn" title="Toggle globe view">
+      <i class="fas fa-globe"></i>
+    </button>
+    <button class="control-btn" id="layers-btn" title="Map layers">
+      <i class="fas fa-layer-group"></i>
+    </button>
+  </div>
+
+  <!-- Navigation Controls -->
+  <div class="navigation-controls" id="navigation-controls">
+    <button class="nav-control-btn recenter-btn" id="recenter-btn" title="Recenter">
+      <i class="fas fa-crosshairs"></i>
+    </button>
+    <button class="nav-control-btn" id="compass-btn" title="Compass">
+      <i class="fas fa-compass"></i>
+    </button>
+    <button class="nav-control-btn" id="zoom-in-btn" title="Zoom in">
+      <i class="fas fa-plus"></i>
+    </button>
+    <button class="nav-control-btn" id="zoom-out-btn" title="Zoom out">
+      <i class="fas fa-minus"></i>
+    </button>
+  </div>
+
+  <!-- Map Legend -->
+  <div class="map-legend" id="map-legend">
+    <div class="legend-title">District Overlay</div>
+    <div class="legend-item"><div class="legend-color admin"></div><span class="legend-text">Admin Districts</span></div>
+    <div class="legend-item"><div class="legend-color earthquake"></div><span class="legend-text">Earthquake Zones</span></div>
+    <button class="legend-toggle" id="legend-toggle" title="Toggle legend">▴</button>
+  </div>
+
+  <!-- Place detail panel (opens on search) -->
+  <aside class="place-panel" id="place-panel" aria-hidden="true">
+    <div class="place-media">
+      <img id="place-image" alt="Place image" />
+      <button class="panel-close" id="place-close" aria-label="Close">×</button>
+    </div>
+    <div class="place-body">
+      <div class="place-title" id="place-title">—</div>
+      <div class="place-address" id="place-address">—</div>
+      <div class="place-meta"><span id="place-distance">—</span> • <span id="place-eta">—</span></div>
+      <div class="row" style="margin-top:8px;">
+        <button class="btn btn--primary" id="place-start">Start</button>
+        <button class="btn" id="place-clear">Clear</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Camera controls -->
+  <div class="camera-controls" id="camera-controls">
+    <button class="control-btn" id="rotate-left" title="Rotate left">↺</button>
+    <button class="control-btn" id="rotate-right" title="Rotate right">↻</button>
+    <button class="control-btn" id="tilt-up" title="Tilt up">⤴</button>
+    <button class="control-btn" id="tilt-down" title="Tilt down">⤵</button>
+  </div>
+
+  <!-- Location Popup -->
+  <div class="location-popup" id="location-popup">
+    <div class="location-header">
+      <img class="location-image" id="location-image" src="" alt="Location" />
+      <div class="location-overlay"><div class="location-title" id="popup-title">Location</div><div class="location-category" id="popup-category">Category</div></div>
+      <button class="popup-close" id="popup-close" aria-label="Close">×</button>
+    </div>
+    <div class="location-content">
+      <div class="location-description" id="popup-description">...</div>
+      <div class="location-actions">
+        <button class="popup-btn primary" id="navigate-to-btn">Directions</button>
+        <button class="popup-btn secondary" id="save-location-btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading-overlay"><div class="loading-spinner"></div></div>
+
+  <!-- Scripts -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.2/mapbox-gl-geocoder.min.js"></script>
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
